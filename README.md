@@ -15,20 +15,20 @@ An [Obsidian](https://obsidian.md) plugin that moves lines and blocks up and dow
 
 ## Settings
 
-- **Smart movement**: when enabled (default), `Alt + ↑/↓` moves whole blocks; when disabled, they move single lines. `Alt + Shift + ↑/↓` always moves single lines.
-
-All hotkeys can be remapped in *Settings → Hotkeys*.
+- **Smart movement**: when enabled (default), the *smart* commands move whole blocks; when disabled, they move single lines. The *single line* commands always move only the current line.
 
 ## Usage
 
-Place the cursor on a line (or select lines) and press:
+The plugin registers four editor commands but **does not assign default hotkeys**, to avoid conflicts with your existing setup. Open *Settings → Hotkeys*, search for "Line Mover" and assign keys — recommended bindings:
 
-| Hotkey | Action |
-|--------|--------|
-| `Alt + ↑` | Move block up (with children, if smart movement is on) |
-| `Alt + ↓` | Move block down (with children, if smart movement is on) |
-| `Alt + Shift + ↑` | Move single line up |
-| `Alt + Shift + ↓` | Move single line down |
+| Suggested hotkey | Command | Action |
+|------------------|---------|--------|
+| `Alt + ↑` | Move line up (smart, with children) | Move block up, including nested children |
+| `Alt + ↓` | Move line down (smart, with children) | Move block down, including nested children |
+| `Alt + Shift + ↑` | Move line up (single line only) | Move only the current line up |
+| `Alt + Shift + ↓` | Move line down (single line only) | Move only the current line down |
+
+Then place the cursor on a line (or select lines) and use the hotkeys.
 
 ## Installation
 

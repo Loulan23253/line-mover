@@ -1,4 +1,4 @@
-import { Editor, Plugin, MarkdownView, PluginSettingTab, App, Setting } from "obsidian";
+import { Editor, Plugin, PluginSettingTab, App, Setting } from "obsidian";
 
 interface LineBlock {
   start: number;
@@ -21,18 +21,16 @@ export default class LineMoverPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    // 智能移动（含子项，受设置开关控制）
+    // 智能移动（含子项，受设置开关控制）。不预设快捷键，避免与用户已有快捷键冲突
     this.addCommand({
       id: "move-line-up-smart",
       name: "Move line up (smart, with children)",
-      hotkeys: [{ modifiers: ["Alt"], key: "ArrowUp" }],
       editorCallback: (editor: Editor) => this.moveLine(editor, "up", this.settings.smartMove),
     });
 
     this.addCommand({
       id: "move-line-down-smart",
       name: "Move line down (smart, with children)",
-      hotkeys: [{ modifiers: ["Alt"], key: "ArrowDown" }],
       editorCallback: (editor: Editor) => this.moveLine(editor, "down", this.settings.smartMove),
     });
 
@@ -40,14 +38,12 @@ export default class LineMoverPlugin extends Plugin {
     this.addCommand({
       id: "move-line-up-single",
       name: "Move line up (single line only)",
-      hotkeys: [{ modifiers: ["Alt", "Shift"], key: "ArrowUp" }],
       editorCallback: (editor: Editor) => this.moveLine(editor, "up", false),
     });
 
     this.addCommand({
       id: "move-line-down-single",
       name: "Move line down (single line only)",
-      hotkeys: [{ modifiers: ["Alt", "Shift"], key: "ArrowDown" }],
       editorCallback: (editor: Editor) => this.moveLine(editor, "down", false),
     });
 
@@ -57,7 +53,8 @@ export default class LineMoverPlugin extends Plugin {
   onunload() {}
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const saved = (await this.loadData()) as Partial<LineMoverSettings> | null;
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, saved ?? {});
   }
 
   async saveSettings() {
@@ -270,7 +267,6 @@ export default class LineMoverPlugin extends Plugin {
   private getLineBlock(editor: Editor, lineNum: number): LineBlock {
     const line = editor.getLine(lineNum);
     const indent = this.getIndent(line);
-    const totalLines = editor.lineCount();
 
     // 代码围栏作为原子块整体移动，围栏内内容不参与列表/标题解析
     const fence = this.fenceRangeAt(editor, lineNum);
@@ -382,11 +378,11 @@ class LineMoverSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "Line Mover 设置" });
+    new Setting(containerEl).setName("Line Mover 设置").setHeading();
 
     new Setting(containerEl)
       .setName("智能移动模式")
-      .setDesc("开启后 Alt+↑/↓ 智能移动（含子项），关闭后仅移动单行；Alt+Shift+↑/↓ 始终只移动单行。")
+      .setDesc("开启后「Move line up/down (smart)」命令会连同子项一起移动，关闭后仅移动单行。")
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.smartMove)
@@ -396,13 +392,15 @@ class LineMoverSettingTab extends PluginSettingTab {
           })
       );
 
-    containerEl.createEl("h3", { text: "快捷键说明" });
+    new Setting(containerEl).setName("快捷键说明").setHeading();
 
-    const descEl = containerEl.createEl("div", { cls: "setting-item-description" });
-    descEl.innerHTML = `
-      <p><strong>Alt + ↑/↓</strong>：智能移动（含子项，受上方开关控制）</p>
-      <p><strong>Alt + Shift + ↑/↓</strong>：仅移动当前行</p>
-      <p>你可以在设置 → 快捷键中自定义这些快捷键。</p>
-    `;
+    const descEl = containerEl.createDiv({ cls: "setting-item-description" });
+    const smartRow = descEl.createEl("p");
+    smartRow.createEl("strong", { text: "Move line up/down (smart, with children)" });
+    smartRow.appendText("：智能移动，包含子项（受上方开关控制）");
+    const singleRow = descEl.createEl("p");
+    singleRow.createEl("strong", { text: "Move line up/down (single line only)" });
+    singleRow.appendText("：仅移动当前行");
+    descEl.createEl("p").setText("插件不预设快捷键，请在 设置 → 快捷键 中为这些命令指定按键（推荐 Alt+↑/↓ 与 Alt+Shift+↑/↓）。");
   }
 }

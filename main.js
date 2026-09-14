@@ -41,25 +41,21 @@ var LineMoverPlugin = class extends import_obsidian.Plugin {
     this.addCommand({
       id: "move-line-up-smart",
       name: "Move line up (smart, with children)",
-      hotkeys: [{ modifiers: ["Alt"], key: "ArrowUp" }],
       editorCallback: (editor) => this.moveLine(editor, "up", this.settings.smartMove)
     });
     this.addCommand({
       id: "move-line-down-smart",
       name: "Move line down (smart, with children)",
-      hotkeys: [{ modifiers: ["Alt"], key: "ArrowDown" }],
       editorCallback: (editor) => this.moveLine(editor, "down", this.settings.smartMove)
     });
     this.addCommand({
       id: "move-line-up-single",
       name: "Move line up (single line only)",
-      hotkeys: [{ modifiers: ["Alt", "Shift"], key: "ArrowUp" }],
       editorCallback: (editor) => this.moveLine(editor, "up", false)
     });
     this.addCommand({
       id: "move-line-down-single",
       name: "Move line down (single line only)",
-      hotkeys: [{ modifiers: ["Alt", "Shift"], key: "ArrowDown" }],
       editorCallback: (editor) => this.moveLine(editor, "down", false)
     });
     this.addSettingTab(new LineMoverSettingTab(this.app, this));
@@ -67,7 +63,8 @@ var LineMoverPlugin = class extends import_obsidian.Plugin {
   onunload() {
   }
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const saved = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, saved != null ? saved : {});
   }
   async saveSettings() {
     await this.saveData(this.settings);
@@ -241,7 +238,6 @@ var LineMoverPlugin = class extends import_obsidian.Plugin {
   getLineBlock(editor, lineNum) {
     const line = editor.getLine(lineNum);
     const indent = this.getIndent(line);
-    const totalLines = editor.lineCount();
     const fence = this.fenceRangeAt(editor, lineNum);
     if (fence) {
       return { start: fence.start, end: fence.end, lines: [], indent: 0 };
@@ -330,19 +326,21 @@ var LineMoverSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Line Mover \u8BBE\u7F6E" });
-    new import_obsidian.Setting(containerEl).setName("\u667A\u80FD\u79FB\u52A8\u6A21\u5F0F").setDesc("\u5F00\u542F\u540E Alt+\u2191/\u2193 \u667A\u80FD\u79FB\u52A8\uFF08\u542B\u5B50\u9879\uFF09\uFF0C\u5173\u95ED\u540E\u4EC5\u79FB\u52A8\u5355\u884C\uFF1BAlt+Shift+\u2191/\u2193 \u59CB\u7EC8\u53EA\u79FB\u52A8\u5355\u884C\u3002").addToggle(
+    new import_obsidian.Setting(containerEl).setName("Line Mover \u8BBE\u7F6E").setHeading();
+    new import_obsidian.Setting(containerEl).setName("\u667A\u80FD\u79FB\u52A8\u6A21\u5F0F").setDesc("\u5F00\u542F\u540E\u300CMove line up/down (smart)\u300D\u547D\u4EE4\u4F1A\u8FDE\u540C\u5B50\u9879\u4E00\u8D77\u79FB\u52A8\uFF0C\u5173\u95ED\u540E\u4EC5\u79FB\u52A8\u5355\u884C\u3002").addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.smartMove).onChange(async (value) => {
         this.plugin.settings.smartMove = value;
         await this.plugin.saveSettings();
       })
     );
-    containerEl.createEl("h3", { text: "\u5FEB\u6377\u952E\u8BF4\u660E" });
-    const descEl = containerEl.createEl("div", { cls: "setting-item-description" });
-    descEl.innerHTML = `
-      <p><strong>Alt + \u2191/\u2193</strong>\uFF1A\u667A\u80FD\u79FB\u52A8\uFF08\u542B\u5B50\u9879\uFF0C\u53D7\u4E0A\u65B9\u5F00\u5173\u63A7\u5236\uFF09</p>
-      <p><strong>Alt + Shift + \u2191/\u2193</strong>\uFF1A\u4EC5\u79FB\u52A8\u5F53\u524D\u884C</p>
-      <p>\u4F60\u53EF\u4EE5\u5728\u8BBE\u7F6E \u2192 \u5FEB\u6377\u952E\u4E2D\u81EA\u5B9A\u4E49\u8FD9\u4E9B\u5FEB\u6377\u952E\u3002</p>
-    `;
+    new import_obsidian.Setting(containerEl).setName("\u5FEB\u6377\u952E\u8BF4\u660E").setHeading();
+    const descEl = containerEl.createDiv({ cls: "setting-item-description" });
+    const smartRow = descEl.createEl("p");
+    smartRow.createEl("strong", { text: "Move line up/down (smart, with children)" });
+    smartRow.appendText("\uFF1A\u667A\u80FD\u79FB\u52A8\uFF0C\u5305\u542B\u5B50\u9879\uFF08\u53D7\u4E0A\u65B9\u5F00\u5173\u63A7\u5236\uFF09");
+    const singleRow = descEl.createEl("p");
+    singleRow.createEl("strong", { text: "Move line up/down (single line only)" });
+    singleRow.appendText("\uFF1A\u4EC5\u79FB\u52A8\u5F53\u524D\u884C");
+    descEl.createEl("p").setText("\u63D2\u4EF6\u4E0D\u9884\u8BBE\u5FEB\u6377\u952E\uFF0C\u8BF7\u5728 \u8BBE\u7F6E \u2192 \u5FEB\u6377\u952E \u4E2D\u4E3A\u8FD9\u4E9B\u547D\u4EE4\u6307\u5B9A\u6309\u952E\uFF08\u63A8\u8350 Alt+\u2191/\u2193 \u4E0E Alt+Shift+\u2191/\u2193\uFF09\u3002");
   }
 };
