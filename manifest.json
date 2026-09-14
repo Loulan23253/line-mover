@@ -1,0 +1,9 @@
+{
+  "id": "line-mover",
+  "name": "Line Mover",
+  "version": "1.2.0",
+  "minAppVersion": "1.0.0",
+  "description": "Move lines up and down with Alt+↑/↓. Supports smart movement for list items and heading blocks.",
+  "author": "Yixianrichen",
+  "isDesktopOnly": false
+}
