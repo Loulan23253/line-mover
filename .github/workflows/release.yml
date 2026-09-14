@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  push:
+    tags: ["*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" main.js manifest.json \
+            --title "Line Mover $GITHUB_REF_NAME" --generate-notes \
+            || gh release upload "$GITHUB_REF_NAME" main.js manifest.json --clobber
