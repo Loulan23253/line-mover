@@ -378,8 +378,6 @@ class LineMoverSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    new Setting(containerEl).setName("Line Mover 设置").setHeading();
-
     new Setting(containerEl)
       .setName("智能移动模式")
       .setDesc("开启后「Move line up/down (smart)」命令会连同子项一起移动，关闭后仅移动单行。")

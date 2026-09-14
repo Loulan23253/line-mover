@@ -326,7 +326,6 @@ var LineMoverSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("Line Mover \u8BBE\u7F6E").setHeading();
     new import_obsidian.Setting(containerEl).setName("\u667A\u80FD\u79FB\u52A8\u6A21\u5F0F").setDesc("\u5F00\u542F\u540E\u300CMove line up/down (smart)\u300D\u547D\u4EE4\u4F1A\u8FDE\u540C\u5B50\u9879\u4E00\u8D77\u79FB\u52A8\uFF0C\u5173\u95ED\u540E\u4EC5\u79FB\u52A8\u5355\u884C\u3002").addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.smartMove).onChange(async (value) => {
         this.plugin.settings.smartMove = value;
