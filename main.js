@@ -29,12 +29,43 @@ __export(main_exports, {
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
 var DEFAULT_SETTINGS = {
-  smartMove: true
+  smartMove: true,
+  lang: "auto"
+};
+var STRINGS = {
+  en: {
+    langName: "Interface language",
+    langDesc: "Auto follows the system language.",
+    smartName: "Smart move",
+    smartDesc: 'When on, the "Move line up/down (smart)" commands move the whole block including children; when off, only the current line moves.',
+    hotkeyHeading: "Hotkeys",
+    smartHint: ": smart move, includes children (controlled by the toggle above)",
+    singleHint: ": moves the current line only",
+    hotkeyHint: "No default hotkeys are set. Assign keys under Settings → Hotkeys (Alt+↑/↓ and Alt+Shift+↑/↓ recommended)."
+  },
+  zh: {
+    langName: "界面语言",
+    langDesc: "Auto 表示跟随系统语言。",
+    smartName: "智能移动模式",
+    smartDesc: "开启后「Move line up/down (smart)」命令会连同子项一起移动，关闭后仅移动单行。",
+    hotkeyHeading: "快捷键说明",
+    smartHint: "：智能移动，包含子项（受上方开关控制）",
+    singleHint: "：仅移动当前行",
+    hotkeyHint: "插件不预设快捷键，请在 设置 → 快捷键 中为这些命令指定按键（推荐 Alt+↑/↓ 与 Alt+Shift+↑/↓）。"
+  }
 };
 var LineMoverPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;
+  }
+  /** 解析界面语言:设置优先,auto 跟随系统(navigator.language,弹窗窗口同样可用)。 */
+  uiLang() {
+    if (this.settings.lang !== "auto") return this.settings.lang;
+    return navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en";
+  }
+  t(key) {
+    return STRINGS[this.uiLang()][key];
   }
   async onload() {
     await this.loadSettings();
@@ -326,20 +357,27 @@ var LineMoverSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("\u667A\u80FD\u79FB\u52A8\u6A21\u5F0F").setDesc("\u5F00\u542F\u540E\u300CMove line up/down (smart)\u300D\u547D\u4EE4\u4F1A\u8FDE\u540C\u5B50\u9879\u4E00\u8D77\u79FB\u52A8\uFF0C\u5173\u95ED\u540E\u4EC5\u79FB\u52A8\u5355\u884C\u3002").addToggle(
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("langName")).setDesc(this.plugin.t("langDesc")).addDropdown(
+      (drop) => drop.addOption("auto", "Auto").addOption("zh", "简体中文").addOption("en", "English").setValue(this.plugin.settings.lang).onChange(async (value) => {
+        this.plugin.settings.lang = value;
+        await this.plugin.saveSettings();
+        this.display();
+      })
+    );
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("smartName")).setDesc(this.plugin.t("smartDesc")).addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.smartMove).onChange(async (value) => {
         this.plugin.settings.smartMove = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("\u5FEB\u6377\u952E\u8BF4\u660E").setHeading();
+    new import_obsidian.Setting(containerEl).setName(this.plugin.t("hotkeyHeading")).setHeading();
     const descEl = containerEl.createDiv({ cls: "setting-item-description" });
     const smartRow = descEl.createEl("p");
     smartRow.createEl("strong", { text: "Move line up/down (smart, with children)" });
-    smartRow.appendText("\uFF1A\u667A\u80FD\u79FB\u52A8\uFF0C\u5305\u542B\u5B50\u9879\uFF08\u53D7\u4E0A\u65B9\u5F00\u5173\u63A7\u5236\uFF09");
+    smartRow.appendText(this.plugin.t("smartHint"));
     const singleRow = descEl.createEl("p");
     singleRow.createEl("strong", { text: "Move line up/down (single line only)" });
-    singleRow.appendText("\uFF1A\u4EC5\u79FB\u52A8\u5F53\u524D\u884C");
-    descEl.createEl("p").setText("\u63D2\u4EF6\u4E0D\u9884\u8BBE\u5FEB\u6377\u952E\uFF0C\u8BF7\u5728 \u8BBE\u7F6E \u2192 \u5FEB\u6377\u952E \u4E2D\u4E3A\u8FD9\u4E9B\u547D\u4EE4\u6307\u5B9A\u6309\u952E\uFF08\u63A8\u8350 Alt+\u2191/\u2193 \u4E0E Alt+Shift+\u2191/\u2193\uFF09\u3002");
+    singleRow.appendText(this.plugin.t("singleHint"));
+    descEl.createEl("p").setText(this.plugin.t("hotkeyHint"));
   }
 };

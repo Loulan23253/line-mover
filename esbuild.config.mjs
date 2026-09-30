@@ -19,6 +19,7 @@ const context = await esbuild.context({
   external: ["obsidian", "electron", "@codemirror/autocomplete", "@codemirror/collab", "@codemirror/commands", "@codemirror/language", "@codemirror/lint", "@codemirror/search", "@codemirror/state", "@codemirror/view", "@lezer/common", "@lezer/highlight", "@lezer/lr", ...builtins.builtinModules],
   format: "cjs",
   target: "es2018",
+  charset: "utf8",
   logLevel: "info",
   sourcemap: prod ? false : "inline",
   treeShaking: true,

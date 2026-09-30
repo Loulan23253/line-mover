@@ -9,14 +9,52 @@ interface LineBlock {
 
 interface LineMoverSettings {
   smartMove: boolean;
+  lang: "auto" | "zh" | "en";
 }
 
 const DEFAULT_SETTINGS: LineMoverSettings = {
   smartMove: true,
+  lang: "auto",
 };
+
+// —— 双语文案:zh / en,lang=auto 时跟随系统语言 ——
+const STRINGS = {
+  en: {
+    langName: "Interface language",
+    langDesc: "Auto follows the system language.",
+    smartName: "Smart move",
+    smartDesc: "When on, the \"Move line up/down (smart)\" commands move the whole block including children; when off, only the current line moves.",
+    hotkeyHeading: "Hotkeys",
+    smartHint: ": smart move, includes children (controlled by the toggle above)",
+    singleHint: ": moves the current line only",
+    hotkeyHint: "No default hotkeys are set. Assign keys under Settings → Hotkeys (Alt+↑/↓ and Alt+Shift+↑/↓ recommended).",
+  },
+  zh: {
+    langName: "界面语言",
+    langDesc: "Auto 表示跟随系统语言。",
+    smartName: "智能移动模式",
+    smartDesc: "开启后「Move line up/down (smart)」命令会连同子项一起移动，关闭后仅移动单行。",
+    hotkeyHeading: "快捷键说明",
+    smartHint: "：智能移动，包含子项（受上方开关控制）",
+    singleHint: "：仅移动当前行",
+    hotkeyHint: "插件不预设快捷键，请在 设置 → 快捷键 中为这些命令指定按键（推荐 Alt+↑/↓ 与 Alt+Shift+↑/↓）。",
+  },
+} as const;
+
+type Lang = keyof typeof STRINGS;
 
 export default class LineMoverPlugin extends Plugin {
   settings: LineMoverSettings = DEFAULT_SETTINGS;
+
+  /** 解析界面语言:设置优先,auto 跟随系统(navigator.language,弹窗窗口同样可用)。 */
+  uiLang(): Lang {
+    if (this.settings.lang !== "auto") return this.settings.lang;
+    return navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en";
+  }
+
+  t<K extends keyof (typeof STRINGS)["en"]>(key: K): string {
+    return STRINGS[this.uiLang()][key];
+  }
 
   async onload() {
     await this.loadSettings();
@@ -379,8 +417,24 @@ class LineMoverSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     new Setting(containerEl)
-      .setName("智能移动模式")
-      .setDesc("开启后「Move line up/down (smart)」命令会连同子项一起移动，关闭后仅移动单行。")
+      .setName(this.plugin.t("langName"))
+      .setDesc(this.plugin.t("langDesc"))
+      .addDropdown((drop) =>
+        drop
+          .addOption("auto", "Auto")
+          .addOption("zh", "简体中文")
+          .addOption("en", "English")
+          .setValue(this.plugin.settings.lang)
+          .onChange(async (value) => {
+            this.plugin.settings.lang = value as LineMoverSettings["lang"];
+            await this.plugin.saveSettings();
+            this.display();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName(this.plugin.t("smartName"))
+      .setDesc(this.plugin.t("smartDesc"))
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.smartMove)
@@ -390,15 +444,15 @@ class LineMoverSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(containerEl).setName("快捷键说明").setHeading();
+    new Setting(containerEl).setName(this.plugin.t("hotkeyHeading")).setHeading();
 
     const descEl = containerEl.createDiv({ cls: "setting-item-description" });
     const smartRow = descEl.createEl("p");
     smartRow.createEl("strong", { text: "Move line up/down (smart, with children)" });
-    smartRow.appendText("：智能移动，包含子项（受上方开关控制）");
+    smartRow.appendText(this.plugin.t("smartHint"));
     const singleRow = descEl.createEl("p");
     singleRow.createEl("strong", { text: "Move line up/down (single line only)" });
-    singleRow.appendText("：仅移动当前行");
-    descEl.createEl("p").setText("插件不预设快捷键，请在 设置 → 快捷键 中为这些命令指定按键（推荐 Alt+↑/↓ 与 Alt+Shift+↑/↓）。");
+    singleRow.appendText(this.plugin.t("singleHint"));
+    descEl.createEl("p").setText(this.plugin.t("hotkeyHint"));
   }
 }
