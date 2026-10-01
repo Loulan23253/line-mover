@@ -28,6 +28,9 @@ const STRINGS = {
     smartHint: ": smart move, includes children (controlled by the toggle above)",
     singleHint: ": moves the current line only",
     hotkeyHint: "No default hotkeys are set. Assign keys under Settings → Hotkeys (Alt+↑/↓ and Alt+Shift+↑/↓ recommended).",
+    supportName: "Support the developer",
+    supportDesc: "If Line Mover helps you, buy the author a coffee.",
+    supportButton: "Buy a coffee ☕",
   },
   zh: {
     langName: "界面语言",
@@ -38,6 +41,9 @@ const STRINGS = {
     smartHint: "：智能移动，包含子项（受上方开关控制）",
     singleHint: "：仅移动当前行",
     hotkeyHint: "插件不预设快捷键，请在 设置 → 快捷键 中为这些命令指定按键（推荐 Alt+↑/↓ 与 Alt+Shift+↑/↓）。",
+    supportName: "支持开发者",
+    supportDesc: "如果 Line Mover 对你有帮助，请作者喝杯咖啡。",
+    supportButton: "请喝咖啡 ☕",
   },
 } as const;
 
@@ -454,5 +460,14 @@ class LineMoverSettingTab extends PluginSettingTab {
     singleRow.createEl("strong", { text: "Move line up/down (single line only)" });
     singleRow.appendText(this.plugin.t("singleHint"));
     descEl.createEl("p").setText(this.plugin.t("hotkeyHint"));
+
+    // 赞助入口:manifest 提供 fundingUrl 时才显示
+    const funding = (this.plugin.manifest as { fundingUrl?: string }).fundingUrl;
+    if (funding) {
+      new Setting(containerEl)
+        .setName(this.plugin.t("supportName"))
+        .setDesc(this.plugin.t("supportDesc"))
+        .addButton((b) => b.setButtonText(this.plugin.t("supportButton")).setCta().onClick(() => window.open(funding)));
+    }
   }
 }
